@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: funereasy-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: funereasy
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d funereasy"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: funereasy-app
+    environment:
+      NODE_ENV: production
+      PORT: 3333
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: funereasy
+      JWT_SECRET: changeme_in_production
+      JWT_EXPIRES_IN: 1d
+      UPLOADS_DIR: uploads
+    ports:
+      - "3333:3333"
+    volumes:
+      - uploads:/app/uploads
+      - images:/app/public/images
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:
+  images:
